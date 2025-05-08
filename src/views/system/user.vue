@@ -1,148 +1,269 @@
 <template>
-    <div>
-        <TableSearch :query="query" :options="searchOpt" :search="handleSearch" />
-        <div class="container">
-            <TableCustom :columns="columns" :tableData="tableData" :total="page.total" :viewFunc="handleView"
-                :delFunc="handleDelete" :page-change="changePage" :editFunc="handleEdit">
-                <template #toolbarBtn>
-                    <el-button type="warning" :icon="CirclePlusFilled" @click="visible = true">新增</el-button>
-                </template>
-            </TableCustom>
+  <div class="user-management">
+    <!-- 用户表格 -->
+    <el-table
+      :data="users"
+      style="width: 100%"
+      stripe
+      border
+      @selection-change="handleSelectionChange"
+      v-loading="loading"
+    >
+      <el-table-column type="selection" width="55" />
+      <el-table-column prop="user_id" label="用户ID" width="180" />
+      <el-table-column prop="username" label="用户名" width="150" />
+      <el-table-column prop="phone" label="手机号" width="150" />
+      <el-table-column prop="role" label="角色">
+        <template #default="{ row }">
+          <el-tag :type="roleTagType(row.role)">
+            {{ row.role }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column fixed="right" label="操作" width="180">
+        <template #default="{ row }">
+          <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+          <el-button type="danger" size="small" @click="() => handleDelete(row)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
 
-        </div>
-        <el-dialog :title="isEdit ? '编辑' : '新增'" v-model="visible" width="700px" destroy-on-close
-            :close-on-click-modal="false" @close="closeDialog">
-            <TableEdit :form-data="rowData" :options="options" :edit="isEdit" :update="updateData" />
-        </el-dialog>
-        <el-dialog title="查看详情" v-model="visible1" width="700px" destroy-on-close>
-            <TableDetail :data="viewData"></TableDetail>
-        </el-dialog>
+    <!-- 操作按钮组 -->
+    <div style="margin-top: 20px">
+      <el-button type="primary" @click="showAddDialog">新增用户</el-button>
+      <el-button
+        type="danger"
+        @click="batchDelete"
+        :disabled="selectedUsers.length === 0"
+      >
+        批量删除
+      </el-button>
     </div>
+
+    <!-- 新增用户对话框 -->
+    <el-dialog v-model="addDialogVisible" title="新增用户" width="30%">
+      <el-form :model="addForm" label-width="80px">
+        <el-form-item label="用户名" required>
+          <el-input v-model="addForm.username" />
+        </el-form-item>
+        <el-form-item label="手机号" required>
+          <el-input v-model="addForm.phone" />
+        </el-form-item>
+        <el-form-item label="角色" required>
+          <el-select v-model="addForm.role" placeholder="请选择">
+            <el-option label="管理员" value="admin" />
+            <el-option label="普通用户" value="user" />
+            <el-option label="访客" value="guest" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="addDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="addUser">确认</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 编辑用户对话框 -->
+    <el-dialog v-model="editDialogVisible" title="编辑用户" width="30%">
+      <el-form :model="editForm" label-width="80px">
+        <el-form-item label="用户ID">
+          <el-input v-model="editForm.user_id" disabled />
+        </el-form-item>
+        <el-form-item label="用户名" required>
+          <el-input v-model="editForm.username" />
+        </el-form-item>
+        <el-form-item label="手机号" required>
+          <el-input v-model="editForm.phone" />
+        </el-form-item>
+        <el-form-item label="角色" required>
+          <el-select v-model="editForm.role" placeholder="请选择">
+            <el-option label="管理员" value="admin" />
+            <el-option label="普通用户" value="user" />
+            <el-option label="访客" value="guest" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="updateUser">确认</el-button>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
-<script setup lang="ts" name="system-user">
-import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
-import { CirclePlusFilled } from '@element-plus/icons-vue';
-import { User } from '@/types/user';
-import { fetchUserData } from '@/api';
-import TableCustom from '@/components/table-custom.vue';
-import TableDetail from '@/components/table-detail.vue';
-import TableSearch from '@/components/table-search.vue';
-import { FormOption, FormOptionList } from '@/types/form-option';
+<script setup>
+import { ref, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import cloudbase from '@cloudbase/js-sdk'
 
-// 查询相关
-const query = reactive({
-    name: '',
-});
-const searchOpt = ref<FormOptionList[]>([
-    { type: 'input', label: '用户名：', prop: 'name' }
-])
-const handleSearch = () => {
-    changePage(1);
-};
-
-// 表格相关
-let columns = ref([
-    { type: 'index', label: '序号', width: 55, align: 'center' },
-    { prop: 'name', label: '用户名' },
-    { prop: 'phone', label: '手机号' },
-    { prop: 'role', label: '角色' },
-    { prop: 'operator', label: '操作', width: 250 },
-])
-const page = reactive({
-    index: 1,
-    size: 10,
-    total: 0,
+// 初始化云开发
+const app = cloudbase.init({
+  env: "cloud1-2g3c7o3eb237ac14"
 })
-const tableData = ref<User[]>([]);
-const getData = async () => {
-    const res = await fetchUserData()
-    tableData.value = res.data.list;
-    page.total = res.data.pageTotal;
-};
-getData();
-
-const changePage = (val: number) => {
-    page.index = val;
-    getData();
-};
-
-// 新增/编辑弹窗相关
-let options = ref<FormOption>({
-    labelWidth: '100px',
-    span: 12,
-    list: [
-        { type: 'input', label: '用户名', prop: 'name', required: true },
-        { type: 'input', label: '手机号', prop: 'phone', required: true },
-        { type: 'input', label: '密码', prop: 'password', required: true },
-        { type: 'input', label: '邮箱', prop: 'email', required: true },
-        { type: 'input', label: '角色', prop: 'role', required: true },
-    ]
+const auth = app.auth({
+  persistence: "local"
 })
-const visible = ref(false);
-const isEdit = ref(false);
-const rowData = ref({});
-const handleEdit = (row: User) => {
-    rowData.value = { ...row };
-    isEdit.value = true;
-    visible.value = true;
-};
-const updateData = () => {
-    closeDialog();
-    getData();
-};
+const db = app.database()
 
-const closeDialog = () => {
-    visible.value = false;
-    isEdit.value = false;
-};
+// 数据状态
+const users = ref([])
+const loading = ref(false)
+const selectedUsers = ref([])
+const addDialogVisible = ref(false)
+const editDialogVisible = ref(false)
 
-// 查看详情弹窗相关
-const visible1 = ref(false);
-const viewData = ref({
-    row: {},
-    list: []
-});
-const handleView = (row: User) => {
-    viewData.value.row = { ...row }
-    viewData.value.list = [
-        {
-            prop: 'id',
-            label: '用户ID',
-        },
-        {
-            prop: 'name',
-            label: '用户名',
-        },
-        {
-            prop: 'password',
-            label: '密码',
-        },
-        {
-            prop: 'email',
-            label: '邮箱',
-        },
-        {
-            prop: 'phone',
-            label: '电话',
-        },
-        {
-            prop: 'role',
-            label: '角色',
-        },
-        {
-            prop: 'date',
-            label: '注册日期',
-        },
-    ]
-    visible1.value = true;
-};
+// 表单数据
+const addForm = ref({
+  user_id: '',
+  username: '',
+  phone: '',
+  role: 'user'
+})
 
-// 删除相关
-const handleDelete = (row: User) => {
-    ElMessage.success('删除成功');
+const editForm = ref({
+  user_id: '',
+  username: '',
+  phone: '',
+  role: 'user'
+})
+
+// 角色标签样式
+const roleTagType = (role) => {
+  switch (role) {
+    case 'admin': return 'success'
+    case 'user': return ''
+    default: return 'info'
+  }
 }
+
+// 获取用户列表
+const fetchUsers = async () => {
+  try {
+    loading.value = true
+    await auth.signInAnonymously()
+    const res = await db.collection('user').get()
+    users.value = res.data
+  } catch (err) {
+    ElMessage.error(`获取用户失败: ${err.message}`)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 生成用户ID
+const generateUserId = () => {
+  return 'U' + Date.now().toString().slice(-6) + Math.floor(Math.random() * 90 + 10)
+}
+
+// 显示新增对话框
+const showAddDialog = () => {
+  addForm.value = {
+    user_id: generateUserId(),
+    username: '',
+    phone: '',
+    role: 'user'
+  }
+  addDialogVisible.value = true
+}
+
+// 处理编辑
+const handleEdit = (user) => {
+  editForm.value = JSON.parse(JSON.stringify(user)) // 深拷贝用户数据
+  editDialogVisible.value = true
+}
+
+// 添加用户
+const addUser = async () => {
+  try {
+    await db.collection('user').add(addForm.value)
+    ElMessage.success('添加成功')
+    addDialogVisible.value = false
+    await fetchUsers()
+  } catch (err) {
+    ElMessage.error(`添加失败: ${err.message}`)
+  }
+}
+
+// 更新用户
+const updateUser = async () => {
+  try {
+    // 重点修复：使用doc(user_id).update()的正确语法
+    await db.collection('user')
+      .where({ user_id: editForm.value.user_id })
+      .update({
+        username: editForm.value.username,
+        phone: editForm.value.phone,
+        role: editForm.value.role
+      })
+
+    ElMessage.success('更新成功')
+    editDialogVisible.value = false
+    await fetchUsers()
+  } catch (err) {
+    ElMessage.error(`更新失败: ${err.message}`)
+  }
+}
+
+// 删除用户 - 修复后的版本
+const handleDelete = async (user) => {
+  try {
+    await ElMessageBox.confirm('确定删除该用户?', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    // 重点修复：使用where条件删除
+    await db.collection('user')
+      .where({ user_id: user.user_id })
+      .remove()
+
+    ElMessage.success('删除成功')
+    await fetchUsers()
+  } catch (err) {
+    if (err !== 'cancel') {
+      ElMessage.error(`删除失败: ${err.message}`)
+    }
+  }
+}
+
+// 批量选择
+const handleSelectionChange = (selection) => {
+  selectedUsers.value = selection
+}
+
+// 批量删除
+const batchDelete = async () => {
+  try {
+    await ElMessageBox.confirm(`确定删除选中的 ${selectedUsers.value.length} 个用户?`, '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    const ids = selectedUsers.value.map(user => user.user_id)
+    await db.collection('user').where({
+      user_id: db.command.in(ids)
+    }).remove()
+
+    ElMessage.success(`已删除 ${ids.length} 个用户`)
+    selectedUsers.value = []
+    await fetchUsers()
+  } catch (err) {
+    if (err !== 'cancel') {
+      ElMessage.error(`批量删除失败: ${err.message}`)
+    }
+  }
+}
+
+// 初始化加载数据
+onMounted(() => {
+  fetchUsers()
+})
 </script>
 
-<style scoped></style>
+<style scoped>
+.user-management {
+  padding: 20px;
+}
+</style>

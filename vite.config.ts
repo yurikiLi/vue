@@ -17,8 +17,13 @@ export default defineConfig({
 		})
 	],
 	optimizeDeps: {
-		include: ['schart.js']
+		include: ['schart.js','weixin-js-sdk']
 	},
+     build: {
+        commonjsOptions: {
+          include: [/weixin-js-sdk/, /node_modules/]
+        }
+      },
 	resolve: {
 		alias: {
 			'@': '/src',
