@@ -45,11 +45,31 @@ const routes: RouteRecordRaw[] = [
                 path: '/system-menu',
                 name: 'system-menu',
                 meta: {
-                    title: '菜单管理',
+                    title: '老人管理',
                     permiss: '13',
                 },
-                component: () => import(/* webpackChunkName: "system-menu" */ '../views/system/menu.vue'),
+                component: () => import(/* webpackChunkName: "system-menu" */ '../views/system/elder.vue'),
             },
+            {
+                path: '/system-action',
+                name: 'system-action',
+                meta: {
+                    title: '行为数据管理',
+                    permiss: '14',
+                },
+                component: () => import(/* webpackChunkName: "system-elder" */ '../views/system/action.vue'),
+            },
+             {
+                        path: '/system-alerts',
+                        name: 'system-alerts',
+                        meta: {
+                            title: '报警记录管理',
+                            permiss: '15',
+                        },
+                        component: () => import(/* webpackChunkName: "system-elder" */ '../views/system/alerts.vue'),
+                    },
+
+
             {
                 path: '/table',
                 name: 'basetable',
