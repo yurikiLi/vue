@@ -17,7 +17,7 @@
         v-model="roleFilter"
         placeholder="按角色筛选"
         clearable
-        style="margin-left: 10px"
+        style="margin-left: 100px;width: 300px;margin-top: 5px"
         @change="fetchUsers"
       >
         <el-option label="全部" value="" />
@@ -40,7 +40,7 @@
       <el-table-column type="selection" width="55" />
       <el-table-column prop="user_id" label="用户ID" width="180" />
       <el-table-column prop="username" label="用户名" width="150" />
-      <el-table-column prop="phone" label="手机号" width="150" />
+      <el-table-column prop="phone" label="手机号" width="200" />
       <el-table-column prop="role" label="角色" width="120">
         <template #default="{ row }">
           <el-tag :type="roleTagType(row.role)">
@@ -53,7 +53,7 @@
           {{ row.elderly_id || '无' }}
         </template>
       </el-table-column>
-      <el-table-column prop="active" label="状态" width="100">
+      <el-table-column prop="active" label="状态" width="200">
         <template #default="{ row }">
           <el-switch
             v-model="row.active"
@@ -181,20 +181,11 @@
           </el-select>
         </el-form-item>
         <el-form-item label="关联老人ID" prop="elderly_id" v-if="showElderlyIdField">
-          <el-select
-            v-model="editForm.elderly_id"
-            placeholder="请选择关联老人"
-            filterable
-            clearable
-            :loading="elderlyLoading"
-          >
-            <el-option
-              v-for="elderly in elderlyList"
-              :key="elderly.elderly_id"
-              :label="`${elderly.name} (${elderly.elderly_id})`"
-              :value="elderly.elderly_id"
-            />
-          </el-select>
+
+                 <el-input v-model="editForm.elderly_id" />
+        <el-form-item label="紧急联系人" prop="emergency_contact">
+                    <el-input v-model="editForm.emergency_contact" />
+        </el-form-item>
         </el-form-item>
         <el-form-item label="紧急联系人" prop="emergency_contact">
           <el-input v-model="editForm.emergency_contact" />
@@ -414,8 +405,6 @@ const handleRoleChange = (role) => {
 const addUser = async () => {
   try {
     // 验证表单
-    await addFormRef.value.validate()
-
     // 检查手机号是否已存在
     const checkRes = await db.collection('user')
       .where({ phone: addForm.value.phone })
@@ -441,8 +430,6 @@ const addUser = async () => {
 // 更新用户
 const updateUser = async () => {
   try {
-    // 验证表单
-    await editFormRef.value.validate()
 
     // 检查手机号是否已被其他用户使用
     const checkRes = await db.collection('user')

@@ -13,12 +13,12 @@ export const menuData: Menus[] = [
         index: '1',
         icon: 'HomeFilled',
         children: [
-            {
-                id: '11',
-                pid: '1',
-                index: '/system-user',
-                title: '用户管理',
-            },
+//             {
+//                 id: '11',
+//                 pid: '1',
+//                 index: '/system-user',
+//                 title: '用户管理',
+//             },
             {
                 id: '12',
                 pid: '1',
@@ -35,14 +35,14 @@ export const menuData: Menus[] = [
                 id: '14',
                 pid: '1',
                 index: '/system-action',
-                title: '行为数据管理',
+                title: '行为记录管理',
             },
-            {
-                id: '15',
-                pid: '1',
-                index: '/system-alerts',
-                title: '报警记录管理',
-            },
+//             {
+//                 id: '15',
+//                 pid: '1',
+//                 index: '/system-alerts',
+//                 title: '报警记录管理',
+//             },
 
         ],
     },

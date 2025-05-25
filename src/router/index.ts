@@ -23,15 +23,15 @@ const routes: RouteRecordRaw[] = [
                 },
                 component: () => import(/* webpackChunkName: "dashboard" */ '../views/dashboard.vue'),
             },
-            {
-                path: '/system-user',
-                name: 'system-user',
-                meta: {
-                    title: '用户管理',
-                    permiss: '11',
-                },
-                component: () => import(/* webpackChunkName: "system-user" */ '../views/system/user.vue'),
-            },
+//             {
+//                 path: '/system-user',
+//                 name: 'system-user',
+//                 meta: {
+//                     title: '用户管理',
+//                     permiss: '11',
+//                 },
+//                 component: () => import(/* webpackChunkName: "system-user" */ '../views/system/user.vue'),
+//             },
             {
                 path: '/system-role',
                 name: 'system-role',

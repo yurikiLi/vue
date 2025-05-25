@@ -5,25 +5,15 @@
       <el-input
         v-model="searchQuery"
         placeholder="搜索老人姓名或ID"
-        style="width: 300px"
+        style="width: 300px "
         clearable
         @clear="handleSearchClear"
         @keyup.enter="handleSearch"
       />
-      <el-button type="primary" @click="handleSearch" style="margin-left: 10px">
+      <el-button type="primary" @click="handleSearch" style="margin-left: 10px ">
         搜索
       </el-button>
-      <el-select
-        v-model="statusFilter"
-        placeholder="按状态筛选"
-        clearable
-        style="margin-left: 10px"
-        @change="fetchElderlyData"
-      >
-        <el-option label="全部" value="" />
-        <el-option label="启用" value="true" />
-        <el-option label="禁用" value="false" />
-      </el-select>
+
     </div>
 
     <!-- 老人数据表格 -->
@@ -45,14 +35,13 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="age" label="年龄" width="80" />
-      <el-table-column prop="habit_pattern" label="日常习惯" width="150" />
+      <el-table-column prop="habit_pattern" label="日常习惯" width="220" />
       <el-table-column prop="user_id" label="关联家属ID" width="180">
         <template #default="{ row }">
           {{ row.user_id || '无' }}
         </template>
       </el-table-column>
-      <el-table-column prop="active" label="状态" width="100">
+      <el-table-column prop="active" label="状态" width="200">
         <template #default="{ row }">
           <el-switch
             v-model="row.active"
@@ -62,7 +51,7 @@
           />
         </template>
       </el-table-column>
-      <el-table-column fixed="right" label="操作" width="220">
+      <el-table-column fixed="right" label="操作" width="240">
         <template #default="{ row }">
           <el-button type="primary" size="small" @click="handleEdit(row)">
             编辑
@@ -180,9 +169,6 @@
             <el-radio label="男" />
             <el-radio label="女" />
           </el-radio-group>
-        </el-form-item>
-        <el-form-item label="年龄" prop="age">
-          <el-input-number v-model="editForm.age" :min="60" :max="120" />
         </el-form-item>
         <el-form-item label="日常习惯" prop="habit_pattern">
           <el-input
@@ -325,9 +311,6 @@ const rules = {
   gender: [
     { required: true, message: '请选择性别', trigger: 'change' }
   ],
-  age: [
-    { required: true, message: '请输入年龄', trigger: 'blur' }
-  ],
   habit_pattern: [
     { max: 200, message: '长度不能超过200个字符', trigger: 'blur' }
   ]
@@ -435,7 +418,6 @@ const showBindDialog = async (elderly) => {
 const addElderly = async () => {
   try {
     // 验证表单
-    await addFormRef.value.validate()
 
     // 添加老人
     await db.collection('elder_info').add(addForm.value)
@@ -451,7 +433,7 @@ const addElderly = async () => {
 const updateElderly = async () => {
   try {
     // 验证表单
-    await editFormRef.value.validate()
+
 
     // 更新老人信息
     await db.collection('elder_info')
@@ -459,7 +441,6 @@ const updateElderly = async () => {
       .update({
         name: editForm.value.name,
         gender: editForm.value.gender,
-        age: editForm.value.age,
         habit_pattern: editForm.value.habit_pattern,
         user_id: editForm.value.user_id,
         active: editForm.value.active

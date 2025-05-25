@@ -14,7 +14,7 @@
         v-model="abnormalFilter"
         placeholder="异常状态"
         clearable
-        style="margin-left: 10px"
+         style="margin-left: 100px;width: 300px;margin-top: 5px"
         @change="fetchActionData"
       >
         <el-option label="全部" value="" />
@@ -26,7 +26,7 @@
         placeholder="按老人筛选"
         clearable
         filterable
-        style="margin-left: 10px"
+       style="margin-left: 100px;width: 300px;margin-top: 5px"
         :loading="elderlyLoading"
         @change="fetchActionData"
       >
@@ -47,7 +47,7 @@
       border
       v-loading="loading"
     >
-      <el-table-column prop="data_id" label="行为ID" width="120" />
+      <el-table-column prop="data_id" label="行为ID" width="300" />
       <el-table-column prop="elderly_id" label="老人ID" width="120">
         <template #default="{ row }">
           <el-tag>{{ row.elderly_id }}</el-tag>
@@ -58,15 +58,15 @@
           {{ formatTime(row.timestamp) }}
         </template>
       </el-table-column>
-      <el-table-column prop="location" label="发生区域" width="150" />
-      <el-table-column prop="is_abnormal" label="异常状态" width="100">
+      <el-table-column prop="location" label="发生区域" width="200" />
+      <el-table-column prop="is_abnormal" label="异常状态" width="200">
         <template #default="{ row }">
           <el-tag :type="row.is_abnormal ? 'danger' : 'success'">
             {{ row.is_abnormal ? '异常' : '正常' }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="120">
+      <el-table-column label="操作" width="190">
         <template #default="{ row }">
           <el-button
             type="danger"

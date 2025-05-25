@@ -184,27 +184,43 @@ const addUser = async () => {
   }
 }
 
-// 更新用户
+// 更新用户 - 完全修复版本
 const updateUser = async () => {
   try {
-    // 重点修复：使用doc(user_id).update()的正确语法
-    await db.collection('user')
-      .where({ user_id: editForm.value.user_id })
+    // 1. 首先验证表单
+    if (!editForm.value.username) {
+      ElMessage.error('用户名不能为空')
+      return
+    }
+
+    // 2. 使用正确的更新语法
+    const result = await db.collection('user')
+      .where({ user_id: editForm.value.user_id }) // 使用where条件查询
       .update({
         username: editForm.value.username,
         phone: editForm.value.phone,
-        role: editForm.value.role
+        role: editForm.value.role,
       })
 
-    ElMessage.success('更新成功')
-    editDialogVisible.value = false
-    await fetchUsers()
+    // 3. 检查更新结果
+    if (result.updated > 0) {
+      ElMessage.success('更新成功')
+      editDialogVisible.value = false
+      await fetchUsers() // 刷新列表
+    } else {
+      ElMessage.warning('未找到匹配的用户记录')
+    }
   } catch (err) {
+    console.error('更新错误详情:', err)
     ElMessage.error(`更新失败: ${err.message}`)
+
+    // 4. 特殊处理常见错误
+    if (err.message.includes('permission')) {
+      ElMessage.error('没有更新权限，请检查数据库权限设置')
+    }
   }
 }
-
-// 删除用户 - 修复后的版本
+// 删除用户
 const handleDelete = async (user) => {
   try {
     await ElMessageBox.confirm('确定删除该用户?', '警告', {
@@ -213,9 +229,9 @@ const handleDelete = async (user) => {
       type: 'warning'
     })
 
-    // 重点修复：使用where条件删除
+    // 使用doc()方法删除
     await db.collection('user')
-      .where({ user_id: user.user_id })
+      .doc(user.user_id)
       .remove()
 
     ElMessage.success('删除成功')
